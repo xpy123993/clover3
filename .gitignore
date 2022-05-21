@@ -1,0 +1,4 @@
+tokens/*
+assets/*
+releases/*
+*.sh
