@@ -106,7 +106,7 @@ func (c *trackConn) Close() error {
 }
 
 func serveLocalSocks5(channel, localAddr string, dialer *corenet.Dialer, tlsConfig *tls.Config) error {
-	log.Printf("Socks5 service for `%s` is serving on `%s`", channel, localAddr)
+	log.Printf("Socks5 service `%s` -> `%s`", channel, localAddr)
 	return StartProxyClient(context.Background(), func(network, address string) (net.Conn, error) {
 		tracker := trace.New(channel, fmt.Sprintf("Socks5 connection to %s", address))
 		conn, err := proxyDial(dialer, channel, network, address, tlsConfig, tracker)
