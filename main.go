@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/xpy123993/corenet"
 	"golang.org/x/net/trace"
 )
@@ -30,6 +31,7 @@ var (
 	exposeLocalAddr     = cmdFlags.Bool("socks5-public", false, "If true, socks5 port will be served at 0.0.0.0. By default only listen on 127.0.0.1")
 	debugPprof          = cmdFlags.String("pprof-address", "", "If not empty, a web server will be started to provide pprof.")
 	socks5DialTimeout   = cmdFlags.Duration("socks5-dial-timeout", 10*time.Second, "The timeout for the proxy server to dial to an address.")
+	ramdomizeChannel    = cmdFlags.Bool("endpoint-randomize-channel", false, "If true, an UUID will be added as a suffix of the channel.")
 
 	templateTLSConfig *tls.Config
 )
@@ -66,7 +68,7 @@ func serveBridge() error {
 	}
 }
 
-func serveEndpointService() error {
+func serveEndpointService(channelName string) error {
 	adapters := []corenet.ListenerAdapter{}
 	if *serverLocalPort >= 0 {
 		directAdapter, err := corenet.CreateListenerTCPPortAdapter(*serverLocalPort)
@@ -76,7 +78,7 @@ func serveEndpointService() error {
 			adapters = append(adapters, directAdapter)
 		}
 	}
-	bridgeAdapter, err := corenet.CreateListenerFallbackURLAdapter(*bridgeServerURL, *channel, templateTLSConfig)
+	bridgeAdapter, err := corenet.CreateListenerFallbackURLAdapter(*bridgeServerURL, channelName, templateTLSConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -177,13 +179,17 @@ func main() {
 	}
 
 	if len(*channel) > 0 {
-		if *channel != certName {
+		if *channel != certName && !strings.HasPrefix(*channel, certName+"@") {
 			log.Printf("WARNING: channel name mismatch: Client might not trust the service")
 		}
 		wg.Add(1)
+		channelName := *channel
+		if *ramdomizeChannel {
+			channelName = channelName + "@" + uuid.New().String()
+		}
 		go func() {
 			defer wg.Done()
-			if err := serveEndpointService(); err != nil {
+			if err := serveEndpointService(channelName); err != nil {
 				log.Printf("Endpoint service exited with error: %v", err)
 			}
 			os.Exit(1)
@@ -209,6 +215,9 @@ func main() {
 				defer wg.Done()
 				channelTLSConfig := templateTLSConfig.Clone()
 				channelTLSConfig.ServerName = channel
+				if strings.Contains(channel, "@") {
+					channelTLSConfig.ServerName = channel[:strings.Index(channel, "@")]
+				}
 				if err := serveLocalSocks5(channel, localAddr, dialer, channelTLSConfig); err != nil {
 					log.Printf("socks5 service (%s) exited with error: %v", channel, err)
 				}
