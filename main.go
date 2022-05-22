@@ -64,45 +64,6 @@ func serveBridge() error {
 		server := corenet.NewBridgeServer(corenet.CreateBridgeQuicBasedFallback(), corenet.WithBridgeServerForceEvictChannelSession(true))
 		log.Printf("Bridge service is listening on %s", *bridgeServerURL)
 		return server.Serve(lis)
-	case "all":
-		wg := sync.WaitGroup{}
-		wg.Add(2)
-		resultChan := make(chan error, 2)
-		go func() {
-			defer wg.Done()
-			lis, err := corenet.CreateBridgeQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlive: true})
-			if err != nil {
-				log.Fatalf("Cannot serve quic based relay: %v", err)
-				return
-			}
-			server := corenet.NewBridgeServer(corenet.CreateBridgeQuicBasedFallback(), corenet.WithBridgeServerForceEvictChannelSession(true))
-			log.Printf("[Quic] Bridge service is listening on %s", *bridgeServerURL)
-			resultChan <- server.Serve(lis)
-			log.Printf("[Quic] Bridge service exited")
-		}()
-		go func() {
-			defer wg.Done()
-			mainLis, err := tls.Listen("tcp", serviceAddress, templateTLSConfig)
-			if err != nil {
-				log.Fatal(err)
-			}
-			server := corenet.NewBridgeServer(corenet.CreateBridgeListenerBasedFallback(), corenet.WithBridgeServerForceEvictChannelSession(true))
-			log.Printf("[TCP] Bridge service is listening on %s", *bridgeServerURL)
-			resultChan <- server.Serve(mainLis)
-			log.Printf("[TCP] Bridge service exited")
-		}()
-		wg.Wait()
-		defer close(resultChan)
-		err1 := <-resultChan
-		if err1 != nil {
-			return err1
-		}
-		err2 := <-resultChan
-		if err2 != nil {
-			return err2
-		}
-		return nil
-
 	default:
 		return fmt.Errorf("unknown protocol: %s", serverURL.Scheme)
 	}
