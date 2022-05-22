@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lucas-clemente/quic-go"
 	"github.com/xpy123993/corenet"
 	"golang.org/x/net/trace"
 )
@@ -56,7 +57,7 @@ func serveBridge() error {
 		log.Printf("Bridge service is listening on %s", *bridgeServerURL)
 		return server.Serve(mainLis)
 	case "quicf":
-		lis, err := corenet.CreateBridgeQuicListener(serviceAddress, templateTLSConfig, nil)
+		lis, err := corenet.CreateBridgeQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlive: true})
 		if err != nil {
 			return err
 		}
