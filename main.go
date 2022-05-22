@@ -138,7 +138,9 @@ func initialize() {
 func main() {
 	if data, err := embeddedFile.ReadFile("tokens/cmdline.txt"); err == nil {
 		cmdFlags.Parse(strings.Split(string(data), "\n"))
-		log.Printf("This binary is compiled with built-in configs, all command arguments will be ignored")
+		if len(os.Args) > 1 {
+			log.Printf("WARNING: This binary is compiled with built-in configs, all command arguments will be ignored")
+		}
 	} else {
 		cmdFlags.Parse(os.Args[1:])
 	}
