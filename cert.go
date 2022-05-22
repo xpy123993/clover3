@@ -18,7 +18,11 @@ func getServerName(rawCert []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return cert.Subject.CommonName, nil
+	name := cert.Subject.CommonName
+	if len(cert.DNSNames) > 0 {
+		name = cert.DNSNames[0]
+	}
+	return name, nil
 }
 
 func getTLSConfigFromEmbeded() (*tls.Config, error) {
