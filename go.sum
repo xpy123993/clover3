@@ -151,6 +151,14 @@ github.com/viant/assertly v0.4.8/go.mod h1:aGifi++jvCrUaklKEKT0BU95igDNaqkvz+49u
 github.com/viant/toolbox v0.24.0/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
 github.com/xpy123993/corenet v0.0.16 h1:4m4WP78bt4BDYwD9GtbZVVOtkrFvjgRhmoXH+/DRXdQ=
 github.com/xpy123993/corenet v0.0.16/go.mod h1:MLsSr5glEbgnHRcswXlGXAMTy/3MvZADV84+sEJtEas=
+github.com/xpy123993/corenet v0.0.17 h1:zfURO9G7y3NoXyvwjjINepj0VLRp00Xdki0E/GVYJ2w=
+github.com/xpy123993/corenet v0.0.17/go.mod h1:MLsSr5glEbgnHRcswXlGXAMTy/3MvZADV84+sEJtEas=
+github.com/xpy123993/corenet v0.0.18 h1:ozJV/I2pAbxR2i/c+dLt6u2qkTg6blwePrX/zeZOxAA=
+github.com/xpy123993/corenet v0.0.18/go.mod h1:MLsSr5glEbgnHRcswXlGXAMTy/3MvZADV84+sEJtEas=
+github.com/xpy123993/corenet v0.0.19 h1:gds1df7wh8LjJHo0a9I72AS1MfYsVx8c1R0i2IgJlWY=
+github.com/xpy123993/corenet v0.0.19/go.mod h1:MLsSr5glEbgnHRcswXlGXAMTy/3MvZADV84+sEJtEas=
+github.com/xpy123993/corenet v0.0.20 h1:d7SvA8X3XzinGdWlk4I3tkvWu9KWPf7jEbJhCY32U6E=
+github.com/xpy123993/corenet v0.0.20/go.mod h1:MLsSr5glEbgnHRcswXlGXAMTy/3MvZADV84+sEJtEas=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 go.opencensus.io v0.18.0/go.mod h1:vKdFvxhtzZ9onBp9VKHK8z/sRpBMnKAsufL7wlDrCOA=

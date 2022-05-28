@@ -22,9 +22,9 @@ import (
 )
 
 var (
-	cmdFlags        = flag.NewFlagSet("clover3", flag.ExitOnError)
-	bridgeMode      = cmdFlags.Bool("serve-bridge", false, "If true, a bridge server will be created to serve `bridge-url`.")
-	bridgeServerURL = cmdFlags.String("bridge-url", "", "The URL of bridge server.")
+	cmdFlags       = flag.NewFlagSet("clover3", flag.ExitOnError)
+	serverRelay    = cmdFlags.Bool("serve-bridge", false, "If true, a relay server will be created to serve `bridge-url`.")
+	relayServerURL = cmdFlags.String("bridge-url", "", "The URL of the relay server.")
 
 	channel             = cmdFlags.String("endpoint-channel", "", "If specified, an endpoint service will be created on that channel.")
 	serverLocalPort     = cmdFlags.Int("endpoint-channel-direct-port", -1, "If non-negative and channel is not empty, the endpoint server will also listen on a direct port.")
@@ -37,8 +37,8 @@ var (
 	templateTLSConfig *tls.Config
 )
 
-func serveBridge() error {
-	serverURL, err := url.Parse(*bridgeServerURL)
+func serveRelay() error {
+	serverURL, err := url.Parse(*relayServerURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,26 +47,21 @@ func serveBridge() error {
 		port = "13300"
 	}
 	serviceAddress := fmt.Sprintf(":%s", port)
-	switch serverURL.Scheme {
-	case "ttf":
+	server := corenet.NewRelayServer(corenet.WithRelayServerForceEvictChannelSession(true))
+	go func() {
 		mainLis, err := tls.Listen("tcp", serviceAddress, templateTLSConfig)
 		if err != nil {
 			log.Fatal(err)
 		}
-		server := corenet.NewBridgeServer(corenet.CreateBridgeListenerBasedFallback(), corenet.WithBridgeServerForceEvictChannelSession(true))
-		log.Printf("Bridge service is listening on %s", *bridgeServerURL)
-		return server.Serve(mainLis)
-	case "quicf":
-		lis, err := corenet.CreateBridgeQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlive: true})
-		if err != nil {
-			return err
-		}
-		server := corenet.NewBridgeServer(corenet.CreateBridgeQuicBasedFallback(), corenet.WithBridgeServerForceEvictChannelSession(true))
-		log.Printf("Bridge service is listening on %s", *bridgeServerURL)
-		return server.Serve(lis)
-	default:
-		return fmt.Errorf("unknown protocol: %s", serverURL.Scheme)
+		log.Printf("Relay service is listening on %s", fmt.Sprintf("ttf://%s", serviceAddress))
+		log.Fatalf("Relay service returns status: %v", server.Serve(mainLis, corenet.UsePlainRelayProtocol()))
+	}()
+	lis, err := corenet.CreateRelayQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlive: true})
+	if err != nil {
+		log.Fatal(err)
 	}
+	log.Printf("Relay service is listening on %s", fmt.Sprintf("quicf://%s", serviceAddress))
+	return server.Serve(lis, corenet.UseQuicRelayProtocol())
 }
 
 func serveEndpointService(channelName string) error {
@@ -79,11 +74,11 @@ func serveEndpointService(channelName string) error {
 			adapters = append(adapters, directAdapter)
 		}
 	}
-	bridgeAdapter, err := corenet.CreateListenerFallbackURLAdapter(*bridgeServerURL, channelName, templateTLSConfig)
+	relayAdapter, err := corenet.CreateListenerFallbackURLAdapter(*relayServerURL, channelName, templateTLSConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
-	adapters = append(adapters, bridgeAdapter)
+	adapters = append(adapters, relayAdapter)
 	listener := corenet.NewMultiListener(adapters...)
 	defer listener.Close()
 	return handleProxyServer(tls.NewListener(listener, templateTLSConfig))
@@ -164,18 +159,18 @@ func main() {
 		}()
 	}
 
-	if len(*bridgeServerURL) == 0 {
+	if len(*relayServerURL) == 0 {
 		cmdFlags.Usage()
 		os.Exit(1)
 	}
 
 	wg := sync.WaitGroup{}
-	if *bridgeMode {
+	if *serverRelay {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := serveBridge(); err != nil {
-				log.Printf("Bridge server exited with error: %v", err)
+			if err := serveRelay(); err != nil {
+				log.Printf("Relay server exited with error: %v", err)
 			}
 			os.Exit(1)
 		}()
@@ -200,8 +195,8 @@ func main() {
 	}
 
 	if len(*localSocks5AddrPair) > 0 {
-		dialer := corenet.NewDialer([]string{*bridgeServerURL},
-			corenet.WithDialerBridgeTLSConfig(templateTLSConfig))
+		dialer := corenet.NewDialer([]string{*relayServerURL},
+			corenet.WithDialerRelayTLSConfig(templateTLSConfig))
 		addressTuple := strings.Split(*localSocks5AddrPair, ",")
 		for _, address := range addressTuple {
 			channel, port, err := net.SplitHostPort(address)

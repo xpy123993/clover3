@@ -124,7 +124,7 @@ func (session *ClientSession) readRequest() (byte, string, error) {
 	return head[1], remoteAddress, nil
 }
 
-func (session *ClientSession) prepareBridgeTCP(RuntimeContext context.Context, RemoteAddress string, Dialer func(network, address string) (net.Conn, error)) (net.Conn, error) {
+func (session *ClientSession) prepareRelayTCP(RuntimeContext context.Context, RemoteAddress string, Dialer func(network, address string) (net.Conn, error)) (net.Conn, error) {
 	conn, err := Dialer("tcp", RemoteAddress)
 	if err != nil {
 		return nil, fmt.Errorf("cannot handshake with proxy server: %v", err)
@@ -191,7 +191,7 @@ func StartProxyClientWithListener(RuntimeContext context.Context, Dialer func(ne
 
 			switch requestType {
 			case 1:
-				remoteConn, err := session.prepareBridgeTCP(RuntimeContext, remoteAddress, Dialer)
+				remoteConn, err := session.prepareRelayTCP(RuntimeContext, remoteAddress, Dialer)
 				if err != nil {
 					session.rejectRequest()
 					return
