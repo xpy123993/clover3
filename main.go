@@ -11,8 +11,10 @@ import (
 	_ "net/http/pprof"
 	"net/url"
 	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,20 +37,20 @@ var (
 	ramdomizeChannel    = cmdFlags.Bool("endpoint-randomize-channel", false, "If true, an UUID will be added as a suffix of the channel.")
 
 	templateTLSConfig *tls.Config
+
+	exitSig = make(chan struct{}, 1)
 )
 
-func serveRelay(wg *sync.WaitGroup) error {
+func serveRelay() error {
 	server := corenet.NewRelayServer(corenet.WithRelayServerForceEvictChannelSession(true))
 
 	serverURLs := strings.Split(*relayServerURLs, ",")
 	for _, rawURL := range serverURLs {
 		serverURL, err := url.Parse(rawURL)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		wg.Add(1)
 		go func() {
-			defer wg.Done()
 			port := serverURL.Port()
 			if len(port) == 0 {
 				port = "13300"
@@ -58,25 +60,33 @@ func serveRelay(wg *sync.WaitGroup) error {
 			case "ttf":
 				relayServerListener, err := tls.Listen("tcp", serviceAddress, templateTLSConfig)
 				if err != nil {
-					log.Fatal(err)
+					log.Printf("Failed to bind %s: %v", serverURL.String(), err)
+					break
 				}
+				defer relayServerListener.Close()
 				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
-				log.Fatalf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UsePlainRelayProtocol()))
+				log.Printf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UsePlainRelayProtocol()))
 			case "ktf":
 				relayServerListener, err := corenet.CreateRelayKCPListener(serviceAddress, templateTLSConfig, corenet.DefaultKCPConfig())
 				if err != nil {
-					log.Fatal(err)
+					log.Printf("Failed to bind %s: %v", serverURL.String(), err)
+					break
 				}
+				defer relayServerListener.Close()
 				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
-				log.Fatalf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UseKCPRelayProtocol()))
+				log.Printf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UseKCPRelayProtocol()))
 			case "quicf":
 				relayServerListener, err := corenet.CreateRelayQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlive: true})
 				if err != nil {
-					log.Fatal(err)
+					log.Printf("Failed to bind %s: %v", serverURL.String(), err)
+					break
 				}
+				defer relayServerListener.Close()
 				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
-				log.Fatalf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UseQuicRelayProtocol()))
+				log.Printf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UseQuicRelayProtocol()))
 			}
+			log.Printf("Relay service on `%s` is stopped", serverURL.String())
+			exitSig <- struct{}{}
 		}()
 	}
 	return nil
@@ -145,21 +155,23 @@ func serveLocalSocks5(channel, localAddr string, dialer *corenet.Dialer, tlsConf
 	}, localAddr)
 }
 
-func initialize() {
+func initialize() error {
 	tlsConfig, err := getTLSConfigFromEnv()
 	if err == nil {
 		templateTLSConfig = tlsConfig
-		return
+		return nil
 	}
 	tlsConfig, err = getTLSConfigFromEmbeded()
 	if err == nil {
 		templateTLSConfig = tlsConfig
-		return
+		return nil
 	}
-	log.Fatalf("No available token, last error: %v", err)
+	return fmt.Errorf("no available token, last error: %v", err)
 }
 
 func main() {
+	defer close(exitSig)
+
 	if data, err := embeddedFile.ReadFile("tokens/cmdline.txt"); err == nil {
 		cmdFlags.Parse(strings.Split(string(data), "\n"))
 		if len(os.Args) > 1 {
@@ -168,11 +180,16 @@ func main() {
 	} else {
 		cmdFlags.Parse(os.Args[1:])
 	}
-	initialize()
+
+	if err := initialize(); err != nil {
+		log.Print(err)
+		return
+	}
 
 	certName, err := getServerName(templateTLSConfig.Certificates[0].Certificate[0])
 	if err != nil {
-		log.Fatalf("Failed to read the certificate: %v", err)
+		log.Printf("Failed to read the certificate: %v", err)
+		return
 	}
 	log.Printf("SSO: I am %s", certName)
 
@@ -190,13 +207,19 @@ func main() {
 
 	if len(*relayServerURLs) == 0 {
 		cmdFlags.Usage()
-		os.Exit(1)
+		return
 	}
 
-	wg := sync.WaitGroup{}
+	osSignals := make(chan os.Signal, 1)
+	defer close(osSignals)
+	signal.Notify(osSignals, syscall.SIGABRT, syscall.SIGINT, syscall.SIGTERM)
+
+	taskCounter := 0
 	if *serverRelay {
-		if err := serveRelay(&wg); err != nil {
-			log.Fatal(err)
+		taskCounter++
+		if err := serveRelay(); err != nil {
+			log.Print(err)
+			return
 		}
 	}
 
@@ -204,37 +227,36 @@ func main() {
 		if *channel != certName && !strings.HasPrefix(*channel, certName+"@") {
 			log.Printf("WARNING: channel name mismatch: Client might not trust the service")
 		}
-		wg.Add(1)
+		taskCounter++
 		channelName := *channel
 		if *ramdomizeChannel {
 			channelName = channelName + "@" + uuid.New().String()
 		}
 		go func() {
-			defer wg.Done()
 			if err := serveEndpointService(channelName); err != nil {
 				log.Printf("Endpoint service exited with error: %v", err)
 			}
-			os.Exit(1)
+			exitSig <- struct{}{}
 		}()
 	}
 
 	if len(*localSocks5AddrPair) > 0 {
 		dialer := corenet.NewDialer(strings.Split(*relayServerURLs, ","),
 			corenet.WithDialerRelayTLSConfig(templateTLSConfig))
+		defer dialer.Close()
 		addressTuple := strings.Split(*localSocks5AddrPair, ",")
 		for _, address := range addressTuple {
 			channel, port, err := net.SplitHostPort(address)
 			if err != nil {
 				log.Printf("Cannot parse address tuples: %v", err)
-				os.Exit(1)
+				return
 			}
 			localAddr := fmt.Sprintf("127.0.0.1:%s", port)
 			if *exposeLocalAddr {
 				localAddr = fmt.Sprintf(":%s", port)
 			}
-			wg.Add(1)
+			taskCounter++
 			go func() {
-				defer wg.Done()
 				channelTLSConfig := templateTLSConfig.Clone()
 				channelTLSConfig.ServerName = channel
 				if strings.Contains(channel, "@") {
@@ -243,10 +265,19 @@ func main() {
 				if err := serveLocalSocks5(channel, localAddr, dialer, channelTLSConfig); err != nil {
 					log.Printf("socks5 service (%s) exited with error: %v", channel, err)
 				}
-				os.Exit(1)
+				exitSig <- struct{}{}
 			}()
 		}
 	}
-	wg.Wait()
-	log.Print("No pending work, exited.")
+	if taskCounter == 0 {
+		log.Printf("No pending work, exited.")
+		return
+	}
+	select {
+	case <-exitSig:
+		log.Printf("One of the services exited.")
+	case res := <-osSignals:
+		log.Printf("Received signal: %v", res)
+	}
+	log.Printf("Exited.")
 }
