@@ -22,9 +22,9 @@ import (
 )
 
 var (
-	cmdFlags       = flag.NewFlagSet("clover3", flag.ExitOnError)
-	serverRelay    = cmdFlags.Bool("serve-bridge", false, "If true, a relay server will be created to serve `bridge-url`.")
-	relayServerURL = cmdFlags.String("bridge-url", "", "The URL of the relay server.")
+	cmdFlags        = flag.NewFlagSet("clover3", flag.ExitOnError)
+	serverRelay     = cmdFlags.Bool("serve-bridge", false, "If true, a relay server will be created to serve `bridge-url`.")
+	relayServerURLs = cmdFlags.String("bridge-url", "", "The URL of the relay server. Can be multiple splitted by `,`")
 
 	channel             = cmdFlags.String("endpoint-channel", "", "If specified, an endpoint service will be created on that channel.")
 	serverLocalPort     = cmdFlags.Int("endpoint-channel-direct-port", -1, "If non-negative and channel is not empty, the endpoint server will also listen on a direct port.")
@@ -37,31 +37,49 @@ var (
 	templateTLSConfig *tls.Config
 )
 
-func serveRelay() error {
-	serverURL, err := url.Parse(*relayServerURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	port := serverURL.Port()
-	if len(port) == 0 {
-		port = "13300"
-	}
-	serviceAddress := fmt.Sprintf(":%s", port)
+func serveRelay(wg *sync.WaitGroup) error {
 	server := corenet.NewRelayServer(corenet.WithRelayServerForceEvictChannelSession(true))
-	go func() {
-		mainLis, err := tls.Listen("tcp", serviceAddress, templateTLSConfig)
+
+	serverURLs := strings.Split(*relayServerURLs, ",")
+	for _, rawURL := range serverURLs {
+		serverURL, err := url.Parse(rawURL)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("Relay service is listening on %s", fmt.Sprintf("ttf://%s", serviceAddress))
-		log.Fatalf("Relay service returns status: %v", server.Serve(mainLis, corenet.UsePlainRelayProtocol()))
-	}()
-	lis, err := corenet.CreateRelayQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlive: true})
-	if err != nil {
-		log.Fatal(err)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			port := serverURL.Port()
+			if len(port) == 0 {
+				port = "13300"
+			}
+			serviceAddress := fmt.Sprintf(":%s", port)
+			switch serverURL.Scheme {
+			case "ttf":
+				relayServerListener, err := tls.Listen("tcp", serviceAddress, templateTLSConfig)
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
+				log.Fatalf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UsePlainRelayProtocol()))
+			case "ktf":
+				relayServerListener, err := corenet.CreateRelayKCPListener(serviceAddress, templateTLSConfig, corenet.DefaultKCPConfig())
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
+				log.Fatalf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UseKCPRelayProtocol()))
+			case "quicf":
+				relayServerListener, err := corenet.CreateRelayQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlive: true})
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
+				log.Fatalf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UseQuicRelayProtocol()))
+			}
+		}()
 	}
-	log.Printf("Relay service is listening on %s", fmt.Sprintf("quicf://%s", serviceAddress))
-	return server.Serve(lis, corenet.UseQuicRelayProtocol())
+	return nil
 }
 
 func serveEndpointService(channelName string) error {
@@ -74,11 +92,22 @@ func serveEndpointService(channelName string) error {
 			adapters = append(adapters, directAdapter)
 		}
 	}
-	relayAdapter, err := corenet.CreateListenerFallbackURLAdapter(*relayServerURL, channelName, templateTLSConfig)
-	if err != nil {
-		log.Fatal(err)
+	serverURLs := strings.Split(*relayServerURLs, ",")
+	for _, serverURL := range serverURLs {
+		relayAdapter, err := corenet.CreateListenerFallbackURLAdapter(serverURL, channelName, templateTLSConfig)
+		if err != nil {
+			log.Printf("Warning: listening on %s failed: %v", serverURL, err)
+		}
+		adapters = append(adapters, relayAdapter)
+
+		if *serverRelay && len(*relayServerURLs) > 1 {
+			log.Printf("The program is also configured to run a relay server, skipped other connections to the local server.")
+			break
+		}
 	}
-	adapters = append(adapters, relayAdapter)
+	if len(adapters) == 0 {
+		return fmt.Errorf("no active listeners")
+	}
 	listener := corenet.NewMultiListener(adapters...)
 	defer listener.Close()
 	return handleProxyServer(tls.NewListener(listener, templateTLSConfig))
@@ -159,21 +188,16 @@ func main() {
 		}()
 	}
 
-	if len(*relayServerURL) == 0 {
+	if len(*relayServerURLs) == 0 {
 		cmdFlags.Usage()
 		os.Exit(1)
 	}
 
 	wg := sync.WaitGroup{}
 	if *serverRelay {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := serveRelay(); err != nil {
-				log.Printf("Relay server exited with error: %v", err)
-			}
-			os.Exit(1)
-		}()
+		if err := serveRelay(&wg); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	if len(*channel) > 0 {
@@ -195,7 +219,7 @@ func main() {
 	}
 
 	if len(*localSocks5AddrPair) > 0 {
-		dialer := corenet.NewDialer([]string{*relayServerURL},
+		dialer := corenet.NewDialer(strings.Split(*relayServerURLs, ","),
 			corenet.WithDialerRelayTLSConfig(templateTLSConfig))
 		addressTuple := strings.Split(*localSocks5AddrPair, ",")
 		for _, address := range addressTuple {

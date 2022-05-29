@@ -3,8 +3,19 @@ module github.com/xpy123993/clover3
 go 1.18
 
 require (
-	github.com/xpy123993/corenet v0.0.20
+	github.com/xpy123993/corenet v0.0.23
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2
+)
+
+require (
+	github.com/klauspost/cpuid/v2 v2.0.6 // indirect
+	github.com/klauspost/reedsolomon v1.9.16 // indirect
+	github.com/pkg/errors v0.8.1 // indirect
+	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
+	github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b // indirect
+	github.com/tjfoc/gmsm v1.4.1 // indirect
+	github.com/xtaci/lossyconn v0.0.0-20200209145036-adba10fffc37 // indirect
+	github.com/xtaci/smux v1.5.16 // indirect
 )
 
 require (
@@ -19,6 +30,7 @@ require (
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/stretchr/testify v1.7.1 // indirect
+	github.com/xtaci/kcp-go v5.4.20+incompatible // indirect
 	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
