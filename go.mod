@@ -2,10 +2,7 @@ module github.com/xpy123993/clover3
 
 go 1.18
 
-require (
-	github.com/xpy123993/corenet v0.0.23
-	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2
-)
+require github.com/xpy123993/corenet v0.0.25
 
 require (
 	github.com/klauspost/cpuid/v2 v2.0.6 // indirect
@@ -16,6 +13,7 @@ require (
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/xtaci/lossyconn v0.0.0-20200209145036-adba10fffc37 // indirect
 	github.com/xtaci/smux v1.5.16 // indirect
+	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
 )
 
 require (

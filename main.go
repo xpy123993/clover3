@@ -103,8 +103,15 @@ func serveEndpointService(channelName string) error {
 		}
 	}
 	serverURLs := strings.Split(*relayServerURLs, ",")
+	listenerFallbackOptions := &corenet.ListenerFallbackOptions{
+		TLSConfig: templateTLSConfig,
+		KCPConfig: corenet.DefaultKCPConfig(),
+		QuicConfig: &quic.Config{
+			KeepAlive: true,
+		},
+	}
 	for _, serverURL := range serverURLs {
-		relayAdapter, err := corenet.CreateListenerFallbackURLAdapter(serverURL, channelName, templateTLSConfig)
+		relayAdapter, err := corenet.CreateListenerFallbackURLAdapter(serverURL, channelName, listenerFallbackOptions)
 		if err != nil {
 			log.Printf("Warning: listening on %s failed: %v", serverURL, err)
 		}
