@@ -38,11 +38,12 @@ var (
 
 	templateTLSConfig *tls.Config
 
-	exitSig = make(chan struct{}, 1)
+	exitSig     = make(chan struct{}, 1)
+	relayServer *corenet.RelayServer
 )
 
 func serveRelay() error {
-	server := corenet.NewRelayServer(corenet.WithRelayServerForceEvictChannelSession(true))
+	relayServer = corenet.NewRelayServer(corenet.WithRelayServerForceEvictChannelSession(true))
 
 	serverURLs := strings.Split(*relayServerURLs, ",")
 	for _, rawURL := range serverURLs {
@@ -65,7 +66,7 @@ func serveRelay() error {
 				}
 				defer relayServerListener.Close()
 				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
-				log.Printf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UsePlainRelayProtocol()))
+				log.Printf("Relay service returns status: %v", relayServer.Serve(relayServerListener, corenet.UsePlainRelayProtocol()))
 			case "ktf":
 				relayServerListener, err := corenet.CreateRelayKCPListener(serviceAddress, templateTLSConfig, corenet.DefaultKCPConfig())
 				if err != nil {
@@ -74,7 +75,7 @@ func serveRelay() error {
 				}
 				defer relayServerListener.Close()
 				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
-				log.Printf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UseKCPRelayProtocol()))
+				log.Printf("Relay service returns status: %v", relayServer.Serve(relayServerListener, corenet.UseKCPRelayProtocol()))
 			case "quicf":
 				relayServerListener, err := corenet.CreateRelayQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlive: true})
 				if err != nil {
@@ -83,7 +84,7 @@ func serveRelay() error {
 				}
 				defer relayServerListener.Close()
 				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
-				log.Printf("Relay service returns status: %v", server.Serve(relayServerListener, corenet.UseQuicRelayProtocol()))
+				log.Printf("Relay service returns status: %v", relayServer.Serve(relayServerListener, corenet.UseQuicRelayProtocol()))
 			}
 			log.Printf("Relay service on `%s` is stopped", serverURL.String())
 			exitSig <- struct{}{}
@@ -285,6 +286,9 @@ func main() {
 		log.Printf("One of the services exited.")
 	case res := <-osSignals:
 		log.Printf("Received signal: %v", res)
+	}
+	if relayServer != nil {
+		relayServer.Close()
 	}
 	log.Printf("Exited.")
 }
