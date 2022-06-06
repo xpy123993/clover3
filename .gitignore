@@ -1,4 +1,5 @@
-tokens/*
+tokens/*.crt
+tokens/*.key
 assets/*
 releases/*
 *.sh
