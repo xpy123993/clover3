@@ -3,7 +3,7 @@ module github.com/xpy123993/clover3
 go 1.18
 
 require (
-	github.com/xpy123993/corenet v0.0.36
+	github.com/xpy123993/corenet v0.0.37
 	golang.org/x/net v0.0.0-20220526153639-5463443f8c37
 )
 

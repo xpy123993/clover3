@@ -180,6 +180,8 @@ github.com/xpy123993/corenet v0.0.35 h1:8fOHAV7NXK67mdjAW0e3vviQZPCeV0qTqvl5MgU8
 github.com/xpy123993/corenet v0.0.35/go.mod h1:nxIyLWgT04d9nyIjP1X5gl4+6Tpy3qAGf7ZX4ej7TcM=
 github.com/xpy123993/corenet v0.0.36 h1:LvVL2VZOFqAECf7T4t5a7lAjS2c7DKmmvGc8DXL+oWA=
 github.com/xpy123993/corenet v0.0.36/go.mod h1:nxIyLWgT04d9nyIjP1X5gl4+6Tpy3qAGf7ZX4ej7TcM=
+github.com/xpy123993/corenet v0.0.37 h1:u8gNOOiol5doUbzoemh9EypztbfGOSWXXCdiBEvxfKM=
+github.com/xpy123993/corenet v0.0.37/go.mod h1:nxIyLWgT04d9nyIjP1X5gl4+6Tpy3qAGf7ZX4ej7TcM=
 github.com/xtaci/kcp-go v5.4.20+incompatible h1:TN1uey3Raw0sTz0Fg8GkfM0uH3YwzhnZWQ1bABv5xAg=
 github.com/xtaci/kcp-go v5.4.20+incompatible/go.mod h1:bN6vIwHQbfHaHtFpEssmWsN45a+AZwO7eyRCmEIbtvE=
 github.com/xtaci/lossyconn v0.0.0-20200209145036-adba10fffc37 h1:EWU6Pktpas0n8lLQwDsRyZfmkPeRbdgPtW609es+/9E=
