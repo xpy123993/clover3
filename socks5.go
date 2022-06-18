@@ -8,6 +8,9 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"time"
+
+	"github.com/xpy123993/clover3/fan"
 )
 
 func writeIPAndPort(Conn io.Writer, Addr net.Addr) error {
@@ -169,6 +172,11 @@ func StartProxyClient(RuntimeContext context.Context, Dialer func(network, addre
 
 // StartProxyClientWithListener starts a socks5 proxy on `listener`.
 func StartProxyClientWithListener(RuntimeContext context.Context, Dialer func(network, address string) (net.Conn, error), LocalAddress string, listener net.Listener) error {
+	udpAddr, err := net.ResolveUDPAddr("udp", LocalAddress)
+	if err != nil {
+		return err
+	}
+
 	for RuntimeContext.Err() == nil {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -201,6 +209,75 @@ func StartProxyClientWithListener(RuntimeContext context.Context, Dialer func(ne
 				go func() { io.Copy(session.Conn, remoteConn); cancelFn() }()
 				go func() { io.Copy(remoteConn, session.Conn); cancelFn() }()
 				<-ctx.Done()
+			case 3:
+				log.Printf("Redirecting UDP")
+				udpConn, err := net.ListenUDP("udp", &net.UDPAddr{
+					IP:   udpAddr.IP,
+					Port: 0,
+				})
+				if err != nil {
+					session.rejectRequest()
+					return
+				}
+				writer := new(bytes.Buffer)
+				if _, err := writer.Write([]byte{5, 0, 0}); err != nil {
+					return
+				}
+				if err := writeIPAndPort(writer, udpConn.LocalAddr()); err != nil {
+					return
+				}
+				writer.WriteTo(conn)
+				serveContext, cancelFn := context.WithCancel(RuntimeContext)
+				go func() {
+					conn.Read(make([]byte, 1))
+					udpConn.Close()
+					cancelFn()
+				}()
+				var localAddr *net.UDPAddr
+
+				channelPool := fan.NewChannelPool(serveContext, &fan.RedirectionConfig{Timeout: time.Second * 30, BufferSize: 65536})
+				fan.RedirectFanIn(serveContext, channelPool, func(buf []byte) (int, int, string, error) {
+					n, sender, err := udpConn.ReadFromUDP(buf)
+					if err != nil {
+						return -1, -1, "", err
+					}
+					reader := bytes.NewReader(buf)
+					for i := 0; i < 3; i++ {
+						if b, err := reader.ReadByte(); err != nil || b != 0 {
+							if err != nil {
+								return -1, -1, "", err
+							}
+							return -1, -1, "", fmt.Errorf("invalid request")
+						}
+					}
+					localAddr = sender
+					addr, err := readProxyAddress(reader)
+					if err != nil {
+						return -1, -1, "", err
+					}
+					return (len(buf) - reader.Len()), n, addr, nil
+				}, func(b []byte, s string) (int, error) {
+					writer := new(bytes.Buffer)
+					writer.Write([]byte{0, 0, 0})
+					udpAddr, err := net.ResolveUDPAddr("udp", s)
+					if err != nil {
+						return -1, err
+					}
+					if err := writeIPAndPort(writer, udpAddr); err != nil {
+						return -1, err
+					}
+					writer.Write(b)
+					total := writer.Len()
+					n, err := udpConn.WriteToUDP(writer.Bytes(), localAddr)
+					return len(b) - (total - n), err
+				}, func(s string) (net.Conn, error) {
+					peerConn, err := Dialer("udp", s)
+					go func() {
+						<-serveContext.Done()
+						peerConn.Close()
+					}()
+					return peerConn, err
+				})
 			default:
 				session.rejectRequest()
 			}
