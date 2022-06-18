@@ -35,15 +35,17 @@ var (
 	debugPprof          = cmdFlags.String("pprof-address", "", "If not empty, a web server will be started to provide pprof.")
 	socks5DialTimeout   = cmdFlags.Duration("socks5-dial-timeout", 10*time.Second, "The timeout for the proxy server to dial to an address.")
 	ramdomizeChannel    = cmdFlags.Bool("endpoint-randomize-channel", false, "If true, an UUID will be added as a suffix of the channel.")
-
-	templateTLSConfig *tls.Config
+	logError            = cmdFlags.Bool("log-error", false, "If true, the server will dump errors")
+	templateTLSConfig   *tls.Config
 
 	exitSig     = make(chan struct{}, 1)
 	relayServer *corenet.RelayServer
 )
 
 func serveRelay() error {
-	relayServer = corenet.NewRelayServer(corenet.WithRelayServerForceEvictChannelSession(true))
+	relayServer = corenet.NewRelayServer(
+		corenet.WithRelayServerForceEvictChannelSession(true),
+		corenet.WithRelayServerLogError(*logError))
 
 	serverURLs := strings.Split(*relayServerURLs, ",")
 	for _, rawURL := range serverURLs {
