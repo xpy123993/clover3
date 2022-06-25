@@ -98,7 +98,7 @@ func serveRelay() error {
 func serveEndpointService(channelName string) error {
 	adapters := []corenet.ListenerAdapter{}
 	if *serverLocalPort >= 0 {
-		directAdapter, err := corenet.CreateListenerTCPPortAdapter(*serverLocalPort)
+		directAdapter, err := corenet.CreateListenerTCPPortAdapter(*serverLocalPort, templateTLSConfig)
 		if err != nil {
 			log.Printf("Warning: listening on local port failed: %v", err)
 		} else {
@@ -252,7 +252,7 @@ func main() {
 
 	if len(*localSocks5AddrPair) > 0 {
 		dialer := corenet.NewDialer(strings.Split(*relayServerURLs, ","),
-			corenet.WithDialerRelayTLSConfig(templateTLSConfig))
+			templateTLSConfig)
 		defer dialer.Close()
 		addressTuple := strings.Split(*localSocks5AddrPair, ",")
 		for _, address := range addressTuple {
