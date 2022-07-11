@@ -17,9 +17,9 @@ import (
 	"syscall"
 	"time"
 
+	"git.yuki.nu/corenet"
 	"github.com/google/uuid"
 	"github.com/lucas-clemente/quic-go"
-	"github.com/xpy123993/corenet"
 	"golang.org/x/net/trace"
 )
 

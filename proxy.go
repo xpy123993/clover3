@@ -9,7 +9,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/xpy123993/corenet"
+	"git.yuki.nu/corenet"
 	"golang.org/x/net/trace"
 )
 

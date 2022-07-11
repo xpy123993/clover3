@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xpy123993/clover3/fan"
+	"git.yuki.nu/clover3/fan"
 )
 
 func writeIPAndPort(Conn io.Writer, Addr net.Addr) error {

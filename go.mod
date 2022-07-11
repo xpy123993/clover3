@@ -1,11 +1,10 @@
-module github.com/xpy123993/clover3
+module git.yuki.nu/clover3
 
 go 1.18
 
-require (
-	github.com/xpy123993/corenet v0.0.40
-	golang.org/x/net v0.0.0-20220526153639-5463443f8c37
-)
+require golang.org/x/net v0.0.0-20220526153639-5463443f8c37
+
+require git.yuki.nu/corenet v0.0.43
 
 require (
 	github.com/cheekybits/genny v1.0.0 // indirect
