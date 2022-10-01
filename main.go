@@ -181,6 +181,9 @@ func initialize() error {
 
 func main() {
 	defer close(exitSig)
+	trace.AuthRequest = func(req *http.Request) (any bool, sensitive bool) {
+		return true, true
+	}
 
 	if data, err := embeddedFile.ReadFile("tokens/cmdline.txt"); err == nil {
 		cmdFlags.Parse(strings.Split(string(data), "\n"))
