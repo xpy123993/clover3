@@ -79,7 +79,7 @@ func serveRelay() error {
 				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
 				log.Printf("Relay service returns status: %v", relayServer.Serve(relayServerListener, corenet.UseKCPRelayProtocol()))
 			case "quicf":
-				relayServerListener, err := corenet.CreateRelayQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlive: true})
+				relayServerListener, err := corenet.CreateRelayQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlivePeriod: 20 * time.Second})
 				if err != nil {
 					log.Printf("Failed to bind %s: %v", serverURL.String(), err)
 					break
@@ -110,7 +110,7 @@ func serveEndpointService(channelName string) error {
 		TLSConfig: templateTLSConfig,
 		KCPConfig: corenet.DefaultKCPConfig(),
 		QuicConfig: &quic.Config{
-			KeepAlive: true,
+			KeepAlivePeriod: 20 * time.Second,
 		},
 	}
 	for _, serverURL := range serverURLs {
