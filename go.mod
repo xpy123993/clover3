@@ -3,7 +3,7 @@ module git.yuki.nu/clover3
 go 1.18
 
 require (
-	git.yuki.nu/corenet v0.0.43-rc3
+	git.yuki.nu/corenet v0.0.43
 	github.com/google/uuid v1.3.0
 	github.com/lucas-clemente/quic-go v0.29.1
 	golang.org/x/net v0.0.0-20221004154528-8021a29435af
@@ -20,10 +20,12 @@ require (
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/templexxx/cpu v0.0.9 // indirect
-	github.com/templexxx/xorsimd v0.4.1 // indirect
+	github.com/stretchr/testify v1.6.1 // indirect
+	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
+	github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
-	github.com/xtaci/kcp-go/v5 v5.6.1 // indirect
+	github.com/xtaci/kcp-go v5.4.20+incompatible // indirect
+	github.com/xtaci/lossyconn v0.0.0-20190602105132-8df528c0c9ae // indirect
 	github.com/xtaci/smux v1.5.16 // indirect
 	golang.org/x/crypto v0.0.0-20221005025214-4161e89ecf1b // indirect
 	golang.org/x/exp v0.0.0-20221006183845-316c7553db56 // indirect
