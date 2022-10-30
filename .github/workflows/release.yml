@@ -24,6 +24,8 @@ jobs:
 
     - name: Set up Go
       uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
 
     - name: Build
       run: go build -v ./...
@@ -53,6 +55,8 @@ jobs:
       
       - name: Set up Go
         uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
 
       # Runs a set of commands using the runners shell
       - name: Create Releases
