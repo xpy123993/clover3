@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"git.yuki.nu/corenet"
-	"github.com/google/uuid"
 	"github.com/lucas-clemente/quic-go"
 	"golang.org/x/net/trace"
 )
@@ -34,8 +33,6 @@ var (
 	exposeLocalAddr     = cmdFlags.Bool("socks5-public", false, "If true, socks5 port will be served at 0.0.0.0. By default only listen on 127.0.0.1")
 	debugPprof          = cmdFlags.String("pprof-address", "", "If not empty, a web server will be started to provide pprof.")
 	socks5DialTimeout   = cmdFlags.Duration("socks5-dial-timeout", 10*time.Second, "The timeout for the proxy server to dial to an address.")
-	ramdomizeChannel    = cmdFlags.Bool("endpoint-randomize-channel", false, "If true, an UUID will be added as a suffix of the channel.")
-	logError            = cmdFlags.Bool("log-error", false, "If true, the server will dump errors")
 	templateTLSConfig   *tls.Config
 
 	exitSig     = make(chan struct{}, 1)
@@ -44,8 +41,7 @@ var (
 
 func serveRelay() error {
 	relayServer = corenet.NewRelayServer(
-		corenet.WithRelayServerForceEvictChannelSession(true),
-		corenet.WithRelayServerLogError(*logError))
+		corenet.WithRelayServerForceEvictChannelSession(true))
 
 	serverURLs := strings.Split(*relayServerURLs, ",")
 	for _, rawURL := range serverURLs {
@@ -241,12 +237,8 @@ func main() {
 			log.Printf("WARNING: channel name mismatch: Client might not trust the service")
 		}
 		taskCounter++
-		channelName := *channel
-		if *ramdomizeChannel {
-			channelName = channelName + "@" + uuid.New().String()
-		}
 		go func() {
-			if err := serveEndpointService(channelName); err != nil {
+			if err := serveEndpointService(*channel); err != nil {
 				log.Printf("Endpoint service exited with error: %v", err)
 			}
 			exitSig <- struct{}{}
