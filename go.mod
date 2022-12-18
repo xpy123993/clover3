@@ -3,8 +3,7 @@ module git.yuki.nu/clover3
 go 1.18
 
 require (
-	git.yuki.nu/corenet v0.0.43-rc3
-	github.com/google/uuid v1.3.0
+	git.yuki.nu/corenet v0.0.44
 	github.com/lucas-clemente/quic-go v0.29.1
 	golang.org/x/net v0.0.0-20221004154528-8021a29435af
 )
