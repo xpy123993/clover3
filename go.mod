@@ -3,7 +3,7 @@ module git.yuki.nu/clover3
 go 1.18
 
 require (
-	git.yuki.nu/corenet v0.0.44-rc0
+	git.yuki.nu/corenet v0.0.44
 	github.com/lucas-clemente/quic-go v0.31.1
 	golang.org/x/net v0.4.0
 )

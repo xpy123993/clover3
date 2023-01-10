@@ -1,6 +1,6 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
-git.yuki.nu/corenet v0.0.44-rc0 h1:Ca98qd8DUJaLgAUG7I04oVTbAoGnjSrgGiC1y7E+4BM=
-git.yuki.nu/corenet v0.0.44-rc0/go.mod h1:4y7YuIZLNY6Z2XC/CythOeT9LOAGXHW2G79k8vD1I2U=
+git.yuki.nu/corenet v0.0.44 h1:gfV7Ktv6eu757rdVOk+VAfHoHuJ/7bGbvLh0bwTMhNc=
+git.yuki.nu/corenet v0.0.44/go.mod h1:06CTug5TOkQ6mBVdptU4EcgXDhgqQ246+Z7Dsr4GNqs=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
