@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/lucas-clemente/quic-go v0.31.1
 	github.com/xpy123993/corenet v0.0.46
-	golang.org/x/net v0.4.0
+	golang.org/x/net v0.5.0
 )
 
 require (
@@ -26,6 +26,6 @@ require (
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15 // indirect
 	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/tools v0.4.0 // indirect
 )
