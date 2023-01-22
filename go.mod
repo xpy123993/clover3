@@ -1,10 +1,10 @@
-module git.yuki.nu/clover3
+module github.com/xpy123993/clover3
 
-go 1.18
+go 1.19
 
 require (
-	git.yuki.nu/corenet v0.0.44-rc0
 	github.com/lucas-clemente/quic-go v0.31.1
+	github.com/xpy123993/corenet v0.0.46
 	golang.org/x/net v0.4.0
 )
 

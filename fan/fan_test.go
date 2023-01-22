@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"git.yuki.nu/clover3/fan"
+	"github.com/xpy123993/clover3/fan"
 )
 
 func TestBasic(t *testing.T) {
