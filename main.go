@@ -64,7 +64,7 @@ func serveRelay() error {
 				}
 				defer relayServerListener.Close()
 				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
-				log.Printf("Relay service returns status: %v", relayServer.Serve(relayServerListener, corenet.UsePlainRelayProtocol()))
+				log.Printf("Relay service returns status: %v", relayServer.Serve(relayServerListener, corenet.UseSmuxRelayProtocol()))
 			case "ktf":
 				relayServerListener, err := corenet.CreateRelayKCPListener(serviceAddress, templateTLSConfig, corenet.DefaultKCPConfig())
 				if err != nil {
@@ -73,7 +73,7 @@ func serveRelay() error {
 				}
 				defer relayServerListener.Close()
 				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
-				log.Printf("Relay service returns status: %v", relayServer.Serve(relayServerListener, corenet.UseKCPRelayProtocol()))
+				log.Printf("Relay service returns status: %v", relayServer.Serve(relayServerListener, corenet.UseSmuxRelayProtocol()))
 			case "quicf":
 				relayServerListener, err := corenet.CreateRelayQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlivePeriod: 20 * time.Second})
 				if err != nil {
