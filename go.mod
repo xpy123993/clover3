@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/lucas-clemente/quic-go v0.31.1
-	github.com/xpy123993/corenet v0.0.55
+	github.com/xpy123993/corenet v0.0.56
 	golang.org/x/net v0.6.0
 )
 
