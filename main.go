@@ -8,18 +8,15 @@ import (
 	"log"
 	"net"
 	"net/http"
-	_ "net/http/pprof"
 	"net/url"
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 	"github.com/xpy123993/corenet"
-	"golang.org/x/net/trace"
 )
 
 var (
@@ -129,35 +126,14 @@ func serveEndpointService(channelName string) error {
 	return handleProxyServer(tls.NewListener(listener, templateTLSConfig))
 }
 
-type trackConn struct {
-	net.Conn
-
-	mu       sync.Mutex
-	isClosed bool
-	tracker  trace.Trace
-}
-
-func (c *trackConn) Close() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.isClosed {
-		return nil
-	}
-	c.isClosed = true
-	c.tracker.Finish()
-	return c.Conn.Close()
-}
-
 func serveLocalSocks5(channel, localAddr string, dialer *corenet.Dialer, tlsConfig *tls.Config) error {
 	log.Printf("Socks5 service `%s` -> `%s`", channel, localAddr)
 	return StartProxyClient(context.Background(), func(network, address string) (net.Conn, error) {
-		tracker := trace.New(channel, fmt.Sprintf("Socks5 connection to %s", address))
-		conn, err := proxyDial(dialer, channel, network, address, tlsConfig, tracker)
+		conn, err := proxyDial(dialer, channel, network, address, tlsConfig)
 		if err != nil {
-			tracker.Finish()
 			return nil, err
 		}
-		return &trackConn{Conn: conn, tracker: tracker}, nil
+		return conn, nil
 	}, localAddr)
 }
 
@@ -177,9 +153,6 @@ func initialize() error {
 
 func main() {
 	defer close(exitSig)
-	trace.AuthRequest = func(req *http.Request) (any bool, sensitive bool) {
-		return true, true
-	}
 
 	if data, err := embeddedFile.ReadFile("tokens/cmdline.txt"); err == nil {
 		cmdFlags.Parse(strings.Split(string(data), "\n"))

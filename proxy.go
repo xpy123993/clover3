@@ -10,7 +10,6 @@ import (
 	"net"
 
 	"github.com/xpy123993/corenet"
-	"golang.org/x/net/trace"
 )
 
 type request struct {
@@ -23,11 +22,9 @@ type response struct {
 	Payload string
 }
 
-func proxyDial(dialer *corenet.Dialer, channel, network, remoteAddress string, tlsConfig *tls.Config, tracker trace.Trace) (net.Conn, error) {
+func proxyDial(dialer *corenet.Dialer, channel, network, remoteAddress string, tlsConfig *tls.Config) (net.Conn, error) {
 	conn, err := dialer.Dial(channel)
 	if err != nil {
-		tracker.LazyPrintf("Cannot reach out to remote server: %v", err)
-		tracker.SetError()
 		return nil, err
 	}
 	conn = tls.Client(conn, tlsConfig)
@@ -35,26 +32,20 @@ func proxyDial(dialer *corenet.Dialer, channel, network, remoteAddress string, t
 	handshakeSuccess := false
 	defer func() {
 		if !handshakeSuccess {
-			tracker.SetError()
 			conn.Close()
 		}
 	}()
 
 	if err := gob.NewEncoder(conn).Encode(request{Method: network, Address: remoteAddress}); err != nil {
-		tracker.LazyPrintf("Cannot send request: %v", err)
 		return nil, err
 	}
-	tracker.LazyPrintf("Request sent.")
 	resp := response{}
 	if err := gob.NewDecoder(conn).Decode(&resp); err != nil {
-		tracker.LazyPrintf("Cannot decode response: %v", err)
 		return nil, err
 	}
 	if !resp.Success {
-		tracker.LazyPrintf("Remote server returns error: %v", resp.Payload)
 		return nil, fmt.Errorf("remote error: %s", resp.Payload)
 	}
-	tracker.LazyPrintf("Remote server returns OK. Remote address: %s", resp.Payload)
 	handshakeSuccess = true
 	return conn, nil
 }
