@@ -67,8 +67,8 @@ github.com/templexxx/xorsimd v0.4.1 h1:iUZcywbOYDRAZUasAs2eSCUW8eobuZDy0I9FJiORk
 github.com/templexxx/xorsimd v0.4.1/go.mod h1:W+ffZz8jJMH2SXwuKu9WhygqBMbFnp14G2fqEr8qaNo=
 github.com/tjfoc/gmsm v1.4.1 h1:aMe1GlZb+0bLjn+cKTPEvvn9oUEBlJitaZiiBwsbgho=
 github.com/tjfoc/gmsm v1.4.1/go.mod h1:j4INPkHWMrhJb38G+J6W4Tw0AbuN8Thu3PbdVYhVcTE=
-github.com/xpy123993/corenet v0.0.59 h1:MtV/ZyJ4/E92MuLOhSmYKXbjini6kffUMmJY4Xp4sXU=
-github.com/xpy123993/corenet v0.0.59/go.mod h1:DTrKcZny+MaDbn7DiLZcSwo7QARjEjQyLjldT0H0tXc=
+github.com/xpy123993/corenet v0.0.60 h1:ikqH+rpHKv29+5a8okubaWvVmQ+LeMtq36VKnxP+hNo=
+github.com/xpy123993/corenet v0.0.60/go.mod h1:DTrKcZny+MaDbn7DiLZcSwo7QARjEjQyLjldT0H0tXc=
 github.com/xtaci/kcp-go/v5 v5.6.2 h1:pSXMa5MOsb+EIZKe4sDBqlTExu2A/2Z+DFhoX2qtt2A=
 github.com/xtaci/kcp-go/v5 v5.6.2/go.mod h1:LsinWoru+lWWJHb+EM9HeuqYxV6bb9rNcK12v67jYzQ=
 github.com/xtaci/lossyconn v0.0.0-20190602105132-8df528c0c9ae h1:J0GxkO96kL4WF+AIT3M4mfUVinOCPgf2uUWYFUzN0sM=
