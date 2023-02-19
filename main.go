@@ -51,37 +51,9 @@ func serveRelay() error {
 			if len(port) == 0 {
 				port = "13300"
 			}
-			serviceAddress := fmt.Sprintf(":%s", port)
-			switch serverURL.Scheme {
-			case "ttf":
-				relayServerListener, err := tls.Listen("tcp", serviceAddress, templateTLSConfig)
-				if err != nil {
-					log.Printf("Failed to bind %s: %v", serverURL.String(), err)
-					break
-				}
-				defer relayServerListener.Close()
-				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
-				log.Printf("Relay service returns status: %v", relayServer.Serve(relayServerListener, corenet.UseSmuxRelayProtocol()))
-			case "ktf":
-				relayServerListener, err := corenet.CreateRelayKCPListener(serviceAddress, templateTLSConfig, corenet.DefaultKCPConfig())
-				if err != nil {
-					log.Printf("Failed to bind %s: %v", serverURL.String(), err)
-					break
-				}
-				defer relayServerListener.Close()
-				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
-				log.Printf("Relay service returns status: %v", relayServer.Serve(relayServerListener, corenet.UseSmuxRelayProtocol()))
-			case "quicf":
-				relayServerListener, err := corenet.CreateRelayQuicListener(serviceAddress, templateTLSConfig, &quic.Config{KeepAlivePeriod: 20 * time.Second})
-				if err != nil {
-					log.Printf("Failed to bind %s: %v", serverURL.String(), err)
-					break
-				}
-				defer relayServerListener.Close()
-				log.Printf("Relay service is serving on `%s://%s`", serverURL.Scheme, relayServerListener.Addr().String())
-				log.Printf("Relay service returns status: %v", relayServer.Serve(relayServerListener, corenet.UseQuicRelayProtocol()))
-			}
-			log.Printf("Relay service on `%s` is stopped", serverURL.String())
+			log.Printf("Relay service is serving on `%s`", serverURL.String())
+			err := relayServer.ServeURL(serverURL.String(), templateTLSConfig)
+			log.Printf("Relay service on `%s` is stopped (status: %v)", serverURL.String(), err)
 			exitSig <- struct{}{}
 		}()
 	}
