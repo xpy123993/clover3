@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
 	"flag"
 	"fmt"
@@ -63,7 +64,9 @@ func serveRelay() error {
 func serveEndpointService(channelName string) error {
 	adapters := []corenet.ListenerAdapter{}
 	if *serverLocalPort >= 0 {
-		directAdapter, err := corenet.CreateListenerTCPPortAdapter(*serverLocalPort)
+		key := make([]byte, 32)
+		rand.Read(key)
+		directAdapter, err := corenet.CreateListenerAESTCPPortAdapter(*serverLocalPort, key)
 		if err != nil {
 			log.Printf("Warning: listening on local port failed: %v", err)
 		} else {
