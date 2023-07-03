@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/quic-go/quic-go v0.36.1
-	github.com/xpy123993/corenet v0.0.73
+	github.com/xpy123993/corenet v0.0.75
 )
 
 require (
