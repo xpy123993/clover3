@@ -3,7 +3,7 @@ module github.com/xpy123993/clover3
 go 1.20
 
 require (
-	github.com/quic-go/quic-go v0.36.1
+	github.com/quic-go/quic-go v0.36.2
 	github.com/xpy123993/corenet v0.0.75
 )
 
