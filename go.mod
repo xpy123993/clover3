@@ -3,7 +3,7 @@ module github.com/xpy123993/clover3
 go 1.20
 
 require (
-	github.com/quic-go/quic-go v0.37.4
+	github.com/quic-go/quic-go v0.38.0
 	github.com/xpy123993/corenet v0.0.75
 )
 
@@ -19,7 +19,7 @@ require (
 	github.com/pion/transport/v2 v2.0.2 // indirect
 	github.com/pion/udp/v2 v2.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/quic-go/qtls-go1-20 v0.3.1 // indirect
+	github.com/quic-go/qtls-go1-20 v0.3.2 // indirect
 	github.com/templexxx/cpu v0.1.0 // indirect
 	github.com/templexxx/xorsimd v0.4.2 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
